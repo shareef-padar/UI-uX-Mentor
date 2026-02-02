@@ -209,12 +209,23 @@ Return ONLY a valid JSON object:
 
             } catch (visualError) {
                 console.error("Visual Analysis Final Error:", visualError);
-                analysis.debugError = `Visual/AI Error: ${visualError.message}`;
-                analysis.bad.push(`**Visual Analysis Failed**: ${visualError.message}. Falling back to Code Analysis.`);
 
-                // Add more context if it's a model not found error
-                if (visualError.message.includes('not found')) {
-                    analysis.bad.push(`**Troubleshooting**: The Gemini model 'gemini-1.5-flash' might not be enabled for your API key. Check Google AI Studio.`);
+                // User-friendly error mapping
+                let errorMessage = visualError.message;
+                let troubleshooting = null;
+
+                if (visualError.message.includes('429') || visualError.message.toLowerCase().includes('quota')) {
+                    errorMessage = "AI Rate Limit Reached";
+                    troubleshooting = "You've hit the free tier quota for today or are sending requests too quickly. Please wait 60 seconds and try again.";
+                } else if (visualError.message.includes('not found')) {
+                    troubleshooting = "The Gemini model 'gemini-2.0-flash' might not be enabled for your API key. Check Google AI Studio.";
+                }
+
+                analysis.debugError = `Visual/AI Error: ${visualError.message}`;
+                analysis.bad.push(`**Visual Analysis Failed**: ${errorMessage}. Falling back to Code Analysis.`);
+
+                if (troubleshooting) {
+                    analysis.bad.push(`**Troubleshooting**: ${troubleshooting}`);
                 }
             }
         } else {
