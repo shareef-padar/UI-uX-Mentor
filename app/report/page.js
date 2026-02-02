@@ -47,19 +47,33 @@ function ReportContent() {
     if (!data) return <div>Error loading report.</div>;
 
     return (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <div className="container" style={{ display: 'flex', flexDirection: 'column', gap: '2rem', padding: '2rem 1rem' }}>
+            <div style={{
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+                flexWrap: 'wrap',
+                gap: '1rem'
+            }}>
                 <div>
-                    <h1 style={{ fontSize: '2rem' }}>Analysis Report</h1>
-                    <p style={{ color: 'hsl(var(--muted-foreground))' }}>Source: {data.url}</p>
+                    <h1 style={{ fontSize: '1.75rem', lineHeight: '1.2' }}>Analysis Report</h1>
+                    <p style={{
+                        color: 'hsl(var(--muted-foreground))',
+                        wordBreak: 'break-all',
+                        overflowWrap: 'break-word',
+                        fontSize: '0.85rem',
+                        maxWidth: '100%'
+                    }}>Source: {data.url}</p>
                 </div>
-                <Link href="/analyze">
-                    <Button variant="secondary">New Analysis</Button>
-                </Link>
+                <div className="w-full-mobile w-auto-md">
+                    <Link href="/analyze">
+                        <Button variant="secondary" style={{ width: '100%' }}>New Analysis</Button>
+                    </Link>
+                </div>
             </div>
 
             {/* Scores */}
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '1rem' }}>
+            <div className="grid-stack grid-3" style={{ gap: '1rem' }}>
                 <ScoreCard label="UX Score" score={data.scores.ux} />
                 <ScoreCard label="UI Score" score={data.scores.ui} />
                 <ScoreCard label="Accessibility" score={data.scores.accessibility} />
@@ -113,9 +127,9 @@ function ReportContent() {
             )}
 
             {/* Detailed Analysis */}
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '2rem' }}>
+            <div className="grid-stack grid-2" style={{ gap: '2rem' }}>
                 <Card>
-                    <h3 style={{ color: '#4ade80', fontSize: '1.25rem', marginBottom: '1rem' }}>what's Good</h3>
+                    <h3 style={{ color: '#4ade80', fontSize: '1.25rem', marginBottom: '1rem' }}>What's Good</h3>
                     <ul style={{ paddingLeft: '1.5rem', color: 'hsl(var(--muted-foreground))' }}>
                         {data.good.map((item, i) => <li key={i} style={{ marginBottom: '0.5rem' }}>{item}</li>)}
                     </ul>
@@ -141,17 +155,17 @@ function ReportContent() {
                 {data.lawsObservation && (
                     <Card style={{ gridColumn: '1 / -1' }}>
                         <h3 style={{ color: '#c084fc', fontSize: '1.25rem', marginBottom: '1rem' }}>UX Laws Analysis</h3>
-                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', gap: '1.5rem' }}>
+                        <div className="grid-stack grid-3" style={{ gap: '1.5rem' }}>
                             {data.lawsObservation.map((item, i) => (
-                                <div key={i} style={{ padding: '1rem', background: 'rgba(255,255,255,0.03)', borderRadius: '0.5rem' }}>
-                                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.5rem' }}>
+                                <div key={i} style={{ padding: '1.5rem', background: 'rgba(255,255,255,0.03)', borderRadius: '0.5rem', border: '1px solid rgba(255,255,255,0.05)' }}>
+                                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.75rem', flexWrap: 'wrap', gap: '0.5rem' }}>
                                         <h4 style={{ fontWeight: 'bold', fontSize: '1.1rem' }}>{item.law.name}</h4>
                                         <Badge status={item.status} />
                                     </div>
-                                    <p style={{ fontSize: '0.9rem', marginBottom: '0.5rem', color: 'hsl(var(--muted-foreground))' }}>
+                                    <p style={{ fontSize: '0.9rem', marginBottom: '0.75rem', color: 'hsl(var(--muted-foreground))', lineHeight: '1.5' }}>
                                         {item.observation}
                                     </p>
-                                    <p style={{ fontSize: '0.85rem', color: 'hsl(var(--primary))', fontStyle: 'italic' }}>
+                                    <p style={{ fontSize: '0.85rem', color: 'hsl(var(--primary))', fontStyle: 'italic', opacity: 0.8 }}>
                                         "{item.law.summary}"
                                     </p>
                                 </div>

@@ -21,9 +21,14 @@ export default function AnalyzePage() {
     };
 
     return (
-        <div style={{ maxWidth: '800px', margin: '0 auto', padding: '4rem 0' }}>
-            <h1 style={{ textAlign: 'center', marginBottom: '1rem', fontSize: '2.5rem' }}>Start Analysis</h1>
-            <p style={{ textAlign: 'center', color: 'hsl(var(--muted-foreground))', marginBottom: '3rem' }}>
+        <div className="container" style={{
+            maxWidth: '800px',
+            padding: '4rem 1rem',
+            width: '100%',
+            boxSizing: 'border-box'
+        }}>
+            <h1 style={{ textAlign: 'center', marginBottom: '1rem', fontSize: 'clamp(1.5rem, 5vw, 2.5rem)', lineHeight: '1.2' }}>Start Analysis</h1>
+            <p style={{ textAlign: 'center', color: 'hsl(var(--muted-foreground))', marginBottom: '3rem', fontSize: 'clamp(0.9rem, 3vw, 1rem)' }}>
                 Enter a website URL or upload a screenshot to get instant AI feedback.
             </p>
 

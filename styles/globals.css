@@ -2,33 +2,39 @@
   /* HSL Color Palette - Premium Dark Theme Base */
   --background: 240 10% 3.9%;
   --foreground: 0 0% 98%;
-  
+
   --card: 240 10% 3.9%;
   --card-foreground: 0 0% 98%;
-  
+
   --popover: 240 10% 3.9%;
   --popover-foreground: 0 0% 98%;
-  
-  --primary: 263.4 70% 50.4%; /* Purple-ish */
+
+  --primary: 263.4 70% 50.4%;
+  /* Purple-ish */
   --primary-foreground: 210 40% 98%;
-  
+
   --secondary: 240 3.7% 15.9%;
   --secondary-foreground: 0 0% 98%;
-  
+
   --muted: 240 3.7% 15.9%;
   --muted-foreground: 240 5% 64.9%;
-  
+
   --accent: 240 3.7% 15.9%;
   --accent-foreground: 0 0% 98%;
-  
+
   --destructive: 0 62.8% 30.6%;
   --destructive-foreground: 0 0% 98%;
-  
+
   --border: 240 3.7% 15.9%;
   --input: 240 3.7% 15.9%;
   --ring: 240 4.9% 83.9%;
 
   --radius: 0.75rem;
+
+  /* Breakpoints */
+  --sm: 640px;
+  --md: 768px;
+  --lg: 1024px;
 }
 
 /* Smooth scrolling */
@@ -45,7 +51,12 @@ body {
 }
 
 /* Typography Defaults */
-h1, h2, h3, h4, h5, h6 {
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
   font-family: var(--font-geist-sans);
   letter-spacing: -0.025em;
   font-weight: 700;
@@ -61,7 +72,13 @@ p {
   width: 100%;
   max-width: 1200px;
   margin: 0 auto;
-  padding: 0 1.5rem;
+  padding: 0 1rem;
+}
+
+@media (min-width: 640px) {
+  .container {
+    padding: 0 1.5rem;
+  }
 }
 
 .glass-panel {
@@ -73,9 +90,9 @@ p {
 }
 
 .bg-gradient {
-  background: radial-gradient(circle at 50% 0%, 
-    hsl(var(--primary) / 0.15), 
-    transparent 60%);
+  background: radial-gradient(circle at 50% 0%,
+      hsl(var(--primary) / 0.15),
+      transparent 60%);
 }
 
 .btn {
@@ -109,4 +126,49 @@ p {
 
 .btn-secondary:hover {
   background-color: hsl(var(--secondary) / 0.8);
+}
+
+/* Responsive Utilities */
+.mobile-only {
+  display: block;
+}
+
+.desktop-only {
+  display: none;
+}
+
+@media (min-width: 768px) {
+  .mobile-only {
+    display: none;
+  }
+
+  .desktop-only {
+    display: block;
+  }
+}
+
+.grid-stack {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 1.5rem;
+}
+
+@media (min-width: 768px) {
+  .grid-2 {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .grid-3 {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+.w-full-mobile {
+  width: 100%;
+}
+
+@media (min-width: 768px) {
+  .w-auto-md {
+    width: auto;
+  }
 }

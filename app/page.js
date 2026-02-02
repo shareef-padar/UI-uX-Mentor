@@ -12,21 +12,30 @@ export default function Home() {
         padding: '6rem 1rem',
         background: 'radial-gradient(circle at center, hsl(var(--primary) / 0.2), transparent 70%)'
       }}>
-        <h1 style={{ fontSize: '3.5rem', marginBottom: '1.5rem', background: 'linear-gradient(to right, #fff, #aaa)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>
+        <h1 style={{
+          fontSize: 'clamp(2rem, 8vw, 3.5rem)',
+          marginBottom: '1.5rem',
+          background: 'linear-gradient(to right, #fff, #aaa)',
+          WebkitBackgroundClip: 'text',
+          WebkitTextFillColor: 'transparent',
+          lineHeight: '1.1'
+        }}>
           Elevate Your User Experience
         </h1>
-        <p style={{ fontSize: '1.25rem', color: 'hsl(var(--muted-foreground))', maxWidth: '600px', margin: '0 auto 2.5rem' }}>
+        <p style={{ fontSize: 'clamp(1rem, 4vw, 1.25rem)', color: 'hsl(var(--muted-foreground))', maxWidth: '600px', margin: '0 auto 2.5rem' }}>
           AI-powered design mentorship. Get instant, actionable feedback on your UI/UX with deep analysis of user flows and interface elements.
         </p>
-        <div style={{ display: 'flex', gap: '1rem', justifyContent: 'center' }}>
-          <Link href="/analyze">
-            <Button variant="primary" style={{ fontSize: '1.1rem', padding: '1rem 2rem' }}>
+        <div style={{ display: 'flex', gap: '1rem', justifyContent: 'center', flexWrap: 'wrap' }}>
+          <Link href="/analyze" className="w-full-mobile w-auto-md">
+            <Button variant="primary" style={{ fontSize: '1.1rem', padding: '1rem 2rem', width: '100%' }}>
               Start Analysis
             </Button>
           </Link>
-          <Button variant="secondary" style={{ fontSize: '1.1rem', padding: '1rem 2rem' }}>
-            Learn More
-          </Button>
+          <div className="w-full-mobile w-auto-md">
+            <Button variant="secondary" style={{ fontSize: '1.1rem', padding: '1rem 2rem', width: '100%' }}>
+              Learn More
+            </Button>
+          </div>
         </div>
       </section>
 
