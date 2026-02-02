@@ -87,6 +87,7 @@ export async function POST(request) {
             good: [],
             bad: [],
             improvements: [],
+            actionItems: [],
             lawsObservation: [],
             flowAnalysis: "Analyzing...",
             aiEnabled: false,
@@ -192,6 +193,13 @@ Return ONLY a valid JSON object:
                     } else {
                         analysis.improvements.push(formattedIssue);
                     }
+
+                    analysis.actionItems.push({
+                        element: issue.element,
+                        issue: issue.issue,
+                        severity: issue.severity,
+                        fix: issue.fix
+                    });
 
                     analysis.lawsObservation.push({
                         law: {

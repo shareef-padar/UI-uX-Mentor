@@ -65,6 +65,53 @@ function ReportContent() {
                 <ScoreCard label="Accessibility" score={data.scores.accessibility} />
             </div>
 
+            {/* Actionable Improvements Section */}
+            {data.actionItems && data.actionItems.length > 0 && (
+                <Card style={{ background: 'linear-gradient(135deg, hsl(var(--primary) / 0.1), transparent)', border: '1px solid hsl(var(--primary) / 0.2)' }}>
+                    <h2 style={{ fontSize: '1.5rem', marginBottom: '1.5rem', display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                        <span style={{ fontSize: '2rem' }}>🎯</span> Actionable Improvements
+                    </h2>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+                        {data.actionItems.map((item, i) => (
+                            <div key={i} style={{
+                                padding: '1.5rem',
+                                background: 'hsl(var(--card))',
+                                borderRadius: 'calc(var(--radius) / 2)',
+                                borderLeft: `4px solid ${item.severity.toLowerCase().includes('critical') ? '#f87171' : item.severity.toLowerCase().includes('warning') ? '#facc15' : '#60a5fa'}`,
+                                boxShadow: '0 4px 12px rgba(0,0,0,0.1)'
+                            }}>
+                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'start', marginBottom: '0.75rem' }}>
+                                    <div>
+                                        <h4 style={{ fontWeight: 'bold', fontSize: '1.1rem', marginBottom: '0.25rem' }}>{item.element}</h4>
+                                        <p style={{ fontSize: '0.9rem', color: 'hsl(var(--muted-foreground))' }}>{item.issue}</p>
+                                    </div>
+                                    <span style={{
+                                        fontSize: '0.75rem',
+                                        fontWeight: 'bold',
+                                        padding: '0.25rem 0.5rem',
+                                        borderRadius: '4px',
+                                        background: 'rgba(255,255,255,0.05)',
+                                        textTransform: 'uppercase'
+                                    }}>{item.severity}</span>
+                                </div>
+                                <div style={{
+                                    marginTop: '1rem',
+                                    padding: '1rem',
+                                    background: 'rgba(74, 222, 128, 0.05)',
+                                    borderRadius: '4px',
+                                    border: '1px dashed rgba(74, 222, 128, 0.2)'
+                                }}>
+                                    <h5 style={{ fontSize: '0.85rem', fontWeight: 'bold', color: '#4ade80', marginBottom: '0.5rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                                        <span>🛠️</span> HOW TO FIX:
+                                    </h5>
+                                    <p style={{ fontSize: '0.95rem', lineHeight: '1.5' }}>{item.fix}</p>
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+                </Card>
+            )}
+
             {/* Detailed Analysis */}
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '2rem' }}>
                 <Card>
