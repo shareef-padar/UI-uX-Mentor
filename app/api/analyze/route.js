@@ -12,6 +12,39 @@ export const dynamic = 'force-dynamic';
 const GEN_AI_KEY = process.env.GEMINI_API_KEY;
 const XAI_KEY = process.env.XAI_API_KEY;
 
+const SHARED_PROMPT = `
+### ROLE
+You are a world-class Senior UX/UI Auditor and Conversion Rate Optimization (CRO) Expert. Your goal is to provide deep, professional, and actionable feedback on the provided website.
+
+### ANALYSIS GUIDELINES
+1.  **UX Laws**: Identify which "Laws of UX" (e.g., Fitts's Law, Hick's Law, Jakob's Law, Miller's Law, Zeigarnik Effect) are implemented well or poorly.
+2.  **Visual Hierarchy & Aesthetics**: Grade the visual hierarchy, typography, color harmony, and overall professional feel.
+3.  **Positive Highlights**: Find 3-5 specific UI/UX wins where the site performs exceptionally.
+4.  **Critical Issues (Bad Points)**: Identify 3-5 friction points, confusing layouts, or conversion blockers.
+5.  **Actionable Improvements**: For every issue, provide a clear, step-by-step fix that a developer or designer can follow.
+
+### OUTPUT REQUIREMENTS
+Return ONLY a valid JSON object:
+{
+  "ux_score": (Number 0-100),
+  "ui_score": (Number 0-100),
+  "accessibility_score": (Number 0-100),
+  "visual_hierarchy_grade": "A-F",
+  "conversion_optimization": "In-depth strategic advice for conversion",
+  "good_points": ["Specific positive detail 1", "Specific positive detail 2"],
+  "bad_points": ["Specific negative detail 1", "Specific negative detail 2"],
+  "critical_issues": [
+    {
+      "element": "Name of the UI element",
+      "issue": "Detailed description of the problem",
+      "law_violated": "Name of the specific UX Law",
+      "severity": "Critical | Warning | Suggestion",
+      "fix": "Specific, professional recommendation"
+    }
+  ]
+}
+`;
+
 // Helper to launch browser compatible with Vercel or Local
 async function getBrowser() {
     const isProduction = process.env.NODE_ENV === 'production';
@@ -47,6 +80,54 @@ async function getBrowser() {
     }
 }
 
+async function runGrokAnalysis(screenshotBase64) {
+    const response = await axios.post(
+        "https://api.x.ai/v1/chat/completions",
+        {
+            model: "grok-2-vision-1212",
+            messages: [
+                {
+                    role: "user",
+                    content: [
+                        { type: "text", text: SHARED_PROMPT },
+                        {
+                            type: "image_url",
+                            image_url: { url: `data:image/jpeg;base64,${screenshotBase64}` },
+                        },
+                    ],
+                },
+            ],
+            response_format: { type: "json_object" }
+        },
+        {
+            headers: {
+                "Content-Type": "application/json",
+                Authorization: `Bearer ${XAI_KEY}`,
+            },
+        }
+    );
+    return response.data.choices[0].message.content;
+}
+
+async function runGeminiAnalysis(screenshotBase64) {
+    const genAI = new GoogleGenerativeAI(GEN_AI_KEY);
+    const model = genAI.getGenerativeModel({ model: "gemini-1.5-pro-latest" });
+
+    const result = await model.generateContent([
+        SHARED_PROMPT,
+        {
+            inlineData: {
+                data: screenshotBase64,
+                mimeType: "image/jpeg"
+            }
+        }
+    ]);
+
+    const text = result.response.text();
+    // Clean potential markdown wrap
+    return text.replace(/```json/g, '').replace(/```/g, '').trim();
+}
+
 export async function POST(request) {
     let browser = null;
     try {
@@ -75,7 +156,7 @@ export async function POST(request) {
 
         const $ = cheerio.load(html);
 
-        // 2. Initial Base Analysis Data (Empty, will be populated by AI)
+        // 2. Initial Base Analysis Data
         const analysis = {
             url,
             title: $('title').text().trim(),
@@ -96,110 +177,62 @@ export async function POST(request) {
             status: "Initialized"
         };
 
-
-
-
         // 3. Visual Analysis (Screenshot + AI)
-        if (XAI_KEY && XAI_KEY !== 'your_xai_api_key_here') {
-            console.log("XAI API Key found. Starting Visual Analysis with Grok...");
+        try {
+            analysis.status = "Launching Browser";
+            browser = await getBrowser();
+            analysis.status = "Browser Launched";
+            const page = await browser.newPage();
+            await page.setViewport({ width: 1280, height: 800 });
 
-            try {
-                analysis.status = "Launching Browser";
-                browser = await getBrowser();
-                analysis.status = "Browser Launched";
-                const page = await browser.newPage();
-                await page.setViewport({ width: 1280, height: 800 });
+            analysis.status = "Navigating to Site";
+            await page.goto(url, { waitUntil: 'networkidle2', timeout: 30000 });
+            analysis.status = "Capturing Visual State";
 
-                // Goto URL
-                analysis.status = "Navigating to Site";
-                await page.goto(url, { waitUntil: 'networkidle2', timeout: 30000 });
-                analysis.status = "Capturing Visual State";
+            const screenshotBuffer = await page.screenshot({
+                encoding: 'base64',
+                type: 'jpeg',
+                quality: 80
+            });
 
-                // Capture Screenshot (Optimized for Grok API)
-                const screenshotBuffer = await page.screenshot({
-                    encoding: 'base64',
-                    type: 'jpeg',
-                    quality: 80
-                });
-                analysis.status = "Calling AI Auditor";
+            let aiDataText = null;
+            let usedModel = "None";
 
-                // Call xAI (Grok)
-                const response = await axios.post(
-                    "https://api.x.ai/v1/chat/completions",
-                    {
-                        model: "grok-2-vision-1212",
-                        messages: [
-                            {
-                                role: "user",
-                                content: [
-                                    {
-                                        type: "text", text: `
-### ROLE
-You are a world-class Senior UX/UI Auditor and Conversion Rate Optimization (CRO) Expert. Your goal is to provide deep, professional, and actionable feedback on the provided website.
+            // Attempt Grok first
+            if (XAI_KEY && XAI_KEY !== 'your_xai_api_key_here') {
+                try {
+                    analysis.status = "Auditing (Grok)...";
+                    aiDataText = await runGrokAnalysis(screenshotBuffer);
+                    usedModel = "Grok-2";
+                } catch (grokError) {
+                    console.error("Grok Failed, trying Gemini fallback...", grokError.message);
+                }
+            }
 
-### ANALYSIS GUIDELINES
-1.  **UX Laws**: Identify which "Laws of UX" (e.g., Fitts's Law, Hick's Law, Jakob's Law, Miller's Law, Zeigarnik Effect) are implemented well or poorly.
-2.  **Visual Hierarchy & Aesthetics**: Grade the visual hierarchy, typography, color harmony, and overall professional feel.
-3.  **Positive Highlights**: Find 3-5 specific UI/UX wins where the site performs exceptionally.
-4.  **Critical Issues (Bad Points)**: Identify 3-5 friction points, confusing layouts, or conversion blockers.
-5.  **Actionable Improvements**: For every issue, provide a clear, step-by-step fix that a developer or designer can follow.
+            // Fallback to Gemini if Grok skipped or failed
+            if (!aiDataText && GEN_AI_KEY) {
+                try {
+                    analysis.status = "Auditing (Gemini)...";
+                    aiDataText = await runGeminiAnalysis(screenshotBuffer);
+                    usedModel = "Gemini Pro";
+                } catch (geminiError) {
+                    console.error("Gemini Also Failed:", geminiError.message);
+                    analysis.debugError = geminiError.message;
+                }
+            }
 
-### OUTPUT REQUIREMENTS
-Return ONLY a valid JSON object:
-{
-  "ux_score": (Number 0-100),
-  "ui_score": (Number 0-100),
-  "accessibility_score": (Number 0-100),
-  "visual_hierarchy_grade": "A-F",
-  "conversion_optimization": "In-depth strategic advice for conversion",
-  "good_points": ["Specific positive detail 1", "Specific positive detail 2"],
-  "bad_points": ["Specific negative detail 1", "Specific negative detail 2"],
-  "critical_issues": [
-    {
-      "element": "Name of the UI element",
-      "issue": "Detailed description of the problem",
-      "law_violated": "Name of the specific UX Law",
-      "severity": "Critical | Warning | Suggestion",
-      "fix": "Specific, professional recommendation"
-    }
-  ]
-}
-` },
-                                    {
-                                        type: "image_url",
-                                        image_url: {
-                                            url: `data:image/jpeg;base64,${screenshotBuffer}`,
-                                        },
-                                    },
-                                ],
-                            },
-                        ],
-                        response_format: { type: "json_object" }
-                    },
-                    {
-                        headers: {
-                            "Content-Type": "application/json",
-                            Authorization: `Bearer ${XAI_KEY}`,
-                        },
-                    }
-                );
+            if (aiDataText) {
+                analysis.status = `Finalizing (${usedModel})`;
+                const parsedAiData = typeof aiDataText === 'string' ? JSON.parse(aiDataText) : aiDataText;
 
-                analysis.status = "Parsing Grok Response";
-                const aiData = response.data.choices[0].message.content;
-                console.log("Grok Raw Response:", aiData);
-                const parsedAiData = typeof aiData === 'string' ? JSON.parse(aiData) : aiData;
-
-                // Merge 100% AI-Driven Data
-                analysis.scores.ux = parsedAiData.ux_score || 0;
+                // Merge Data
+                analysis.scores.ux = parsedAiData.ux_score || parsedAiData.score || 0;
                 analysis.scores.ui = parsedAiData.ui_score || 0;
                 analysis.scores.accessibility = parsedAiData.accessibility_score || 0;
-
                 analysis.good = parsedAiData.good_points || [];
                 analysis.bad = parsedAiData.bad_points || [];
                 analysis.flowAnalysis = parsedAiData.conversion_optimization || "Analysis complete.";
                 analysis.improvements = [`**Visual Hierarchy Grade**: ${parsedAiData.visual_hierarchy_grade || 'N/A'}`];
-
-                analysis.lawsObservation = [];
 
                 if (parsedAiData.critical_issues) {
                     parsedAiData.critical_issues.forEach(issue => {
@@ -220,39 +253,17 @@ Return ONLY a valid JSON object:
                         });
                     });
                 }
-
-                analysis.flowAnalysis = parsedAiData.conversion_optimization || "No CRO advice provided.";
-                analysis.improvements.push(`**Visual Hierarchy Grade**: ${parsedAiData.visual_hierarchy_grade || 'N/A'}`);
                 analysis.aiEnabled = true;
-
-            } catch (visualError) {
-                console.error("Visual Analysis Final Error (Grok):", visualError);
-                analysis.status = `Analysis Failed: ${visualError.message}`;
-                analysis.debugError = visualError.message;
-
-                let errorMessage = visualError.message;
-                let troubleshooting = null;
-
-                if (visualError.response?.status === 429) {
-                    errorMessage = "Grok Rate Limit Reached";
-                    troubleshooting = "You've hit the Grok API rate limit. Please wait and try again.";
-                } else if (visualError.response?.status === 401) {
-                    errorMessage = "Invalid API Key";
-                    troubleshooting = "Your Grok API Key seems invalid. Please check your .env.local file.";
-                }
-
-                analysis.bad.push(`**Visual Analysis Failed (Grok)**: ${errorMessage}.`);
-
-                if (troubleshooting) {
-                    analysis.bad.push(`**Troubleshooting**: ${troubleshooting}`);
-                }
+                analysis.status = `Audit Complete via ${usedModel}`;
+            } else {
+                analysis.status = "Audit Failed (No AI keys or errors)";
+                analysis.bad.push("Could not reach any AI models for visual analysis. Please check your API keys.");
             }
-        } else if (GEN_AI_KEY) {
-            analysis.status = "Skipped Grok (Fallback to Gemini)";
-            analysis.bad.push("XAI API Key missing. Skipping Visual Analysis.");
-        } else {
-            analysis.status = "Skipped (No Keys)";
-            analysis.bad.push("Visual Analysis Skipped: Server Key Missing.");
+
+        } catch (fatalError) {
+            console.error("Fatal Analysis Error:", fatalError);
+            analysis.status = `Fatal Error: ${fatalError.message}`;
+            analysis.debugError = fatalError.message;
         }
 
         console.log("FINAL ANALYSIS RESPONSE:", JSON.stringify(analysis, null, 2));
