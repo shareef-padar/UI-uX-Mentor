@@ -92,7 +92,8 @@ export async function POST(request) {
             lawsObservation: [],
             flowAnalysis: "Analyzing...",
             aiEnabled: false,
-            debugError: null
+            debugError: null,
+            status: "Initialized"
         };
 
 
@@ -103,12 +104,16 @@ export async function POST(request) {
             console.log("XAI API Key found. Starting Visual Analysis with Grok...");
 
             try {
+                analysis.status = "Launching Browser";
                 browser = await getBrowser();
+                analysis.status = "Browser Launched";
                 const page = await browser.newPage();
                 await page.setViewport({ width: 1280, height: 800 });
 
                 // Goto URL
+                analysis.status = "Navigating to Site";
                 await page.goto(url, { waitUntil: 'networkidle2', timeout: 30000 });
+                analysis.status = "Capturing Visual State";
 
                 // Capture Screenshot (Optimized for Grok API)
                 const screenshotBuffer = await page.screenshot({
@@ -116,6 +121,7 @@ export async function POST(request) {
                     type: 'jpeg',
                     quality: 80
                 });
+                analysis.status = "Calling AI Auditor";
 
                 // Call xAI (Grok)
                 const response = await axios.post(
@@ -178,6 +184,7 @@ Return ONLY a valid JSON object:
                     }
                 );
 
+                analysis.status = "Parsing Grok Response";
                 const aiData = response.data.choices[0].message.content;
                 console.log("Grok Raw Response:", aiData);
                 const parsedAiData = typeof aiData === 'string' ? JSON.parse(aiData) : aiData;
@@ -220,6 +227,8 @@ Return ONLY a valid JSON object:
 
             } catch (visualError) {
                 console.error("Visual Analysis Final Error (Grok):", visualError);
+                analysis.status = `Analysis Failed: ${visualError.message}`;
+                analysis.debugError = visualError.message;
 
                 let errorMessage = visualError.message;
                 let troubleshooting = null;
@@ -232,7 +241,6 @@ Return ONLY a valid JSON object:
                     troubleshooting = "Your Grok API Key seems invalid. Please check your .env.local file.";
                 }
 
-                analysis.debugError = `Visual/AI Error (Grok): ${visualError.message}`;
                 analysis.bad.push(`**Visual Analysis Failed (Grok)**: ${errorMessage}.`);
 
                 if (troubleshooting) {
@@ -240,25 +248,23 @@ Return ONLY a valid JSON object:
                 }
             }
         } else if (GEN_AI_KEY) {
-            // Keep Gemini as a fallback if XAI is not set
-            console.log("XAI API Key missing. Falling back to Gemini...");
-            try {
-                // ... (Existing Gemini logic)
-                const genAI = new GoogleGenerativeAI(GEN_AI_KEY);
-                // (I'll just put a simplified version or keep the original)
-                // Actually, I'll just skip Gemini if they want to use Grok, 
-                // but for safety, I'll just check for XAI first.
-                // The user said they WANT to use Grok.
-            } catch (e) { }
+            analysis.status = "Skipped Grok (Fallback to Gemini)";
+            analysis.bad.push("XAI API Key missing. Skipping Visual Analysis.");
         } else {
+            analysis.status = "Skipped (No Keys)";
             analysis.bad.push("Visual Analysis Skipped: Server Key Missing.");
         }
 
+        console.log("FINAL ANALYSIS RESPONSE:", JSON.stringify(analysis, null, 2));
         return NextResponse.json(analysis);
 
     } catch (error) {
         console.error("Critical Analysis Error:", error);
-        return NextResponse.json({ error: 'System Error', details: error.message }, { status: 500 });
+        return NextResponse.json({
+            error: 'System Error',
+            details: error.message,
+            status: "Fatal Error"
+        }, { status: 500 });
     } finally {
         if (browser) await browser.close();
     }
