@@ -75,7 +75,7 @@ export async function POST(request) {
 
         const $ = cheerio.load(html);
 
-        // 2. Initial Code Analysis Data
+        // 2. Initial Base Analysis Data (Empty, will be populated by AI)
         const analysis = {
             url,
             title: $('title').text().trim(),
@@ -95,24 +95,7 @@ export async function POST(request) {
             debugError: null
         };
 
-        // Basic Code Heuristics
-        if (analysis.h1Count === 1) analysis.good.push("Semantic HTML: Page has exactly one H1 tag.");
-        else if (analysis.h1Count === 0) analysis.bad.push("SEO Issue: Missing H1 tag.");
-        else analysis.bad.push(`SEO Issue: Multiple H1 tags found (${analysis.h1Count}).`);
 
-        if (analysis.missingAlt === 0 && analysis.totalImages > 0) analysis.good.push("Accessibility: All images have alt tags.");
-        else if (analysis.missingAlt > 0) analysis.bad.push(`Accessibility: ${analysis.missingAlt} images are missing alt text.`);
-
-        if (analysis.metaDescription.length > 50) analysis.good.push("SEO: Meta description is present.");
-        else analysis.improvements.push("SEO: Add a descriptive meta description.");
-
-        // Calculate Code-Only Baseline Scores
-        let codeScore = 70;
-        if (analysis.bad.length > 0) codeScore -= (analysis.bad.length * 5);
-        if (analysis.good.length > 0) codeScore += (analysis.good.length * 2);
-        analysis.scores.ux = codeScore;
-        analysis.scores.ui = codeScore; // Placeholder
-        analysis.scores.accessibility = codeScore + (analysis.missingAlt === 0 ? 10 : -10);
 
 
         // 3. Visual Analysis (Screenshot + AI)
@@ -146,28 +129,32 @@ export async function POST(request) {
                                     {
                                         type: "text", text: `
 ### ROLE
-You are a world-class Senior UX Auditor and Conversion Rate Optimization (CRO) Expert. Analyze this screenshot of a website.
+You are a world-class Senior UX/UI Auditor and Conversion Rate Optimization (CRO) Expert. Your goal is to provide deep, professional, and actionable feedback on the provided website.
 
 ### ANALYSIS GUIDELINES
-1. **UX Laws**: Identify which "Laws of UX" (e.g., Fitts's Law, Hick's Law, Jakob's Law, Miller's Law, Zeigarnik Effect) are being followed or violated.
-2. **Visual Hierarchy**: Grade the visual hierarchy from A to F based on how well it guides the user's eye to the primary CTA.
-3. **Critical Issues**: Focus on friction points, confusing layouts, or accessibility violations.
-4. **Actionable Fixes**: Every issue must have a clear, step-by-step fix.
+1.  **UX Laws**: Identify which "Laws of UX" (e.g., Fitts's Law, Hick's Law, Jakob's Law, Miller's Law, Zeigarnik Effect) are implemented well or poorly.
+2.  **Visual Hierarchy & Aesthetics**: Grade the visual hierarchy, typography, color harmony, and overall professional feel.
+3.  **Positive Highlights**: Find 3-5 specific UI/UX wins where the site performs exceptionally.
+4.  **Critical Issues (Bad Points)**: Identify 3-5 friction points, confusing layouts, or conversion blockers.
+5.  **Actionable Improvements**: For every issue, provide a clear, step-by-step fix that a developer or designer can follow.
 
 ### OUTPUT REQUIREMENTS
 Return ONLY a valid JSON object:
 {
   "ux_score": (Number 0-100),
+  "ui_score": (Number 0-100),
   "accessibility_score": (Number 0-100),
   "visual_hierarchy_grade": "A-F",
-  "conversion_optimization": "Brief strategic advice",
+  "conversion_optimization": "In-depth strategic advice for conversion",
+  "good_points": ["Specific positive detail 1", "Specific positive detail 2"],
+  "bad_points": ["Specific negative detail 1", "Specific negative detail 2"],
   "critical_issues": [
     {
       "element": "Name of the UI element",
-      "issue": "Description of the problem",
+      "issue": "Detailed description of the problem",
       "law_violated": "Name of the specific UX Law",
       "severity": "Critical | Warning | Suggestion",
-      "fix": "Specific recommendation"
+      "fix": "Specific, professional recommendation"
     }
   ]
 }
@@ -195,23 +182,20 @@ Return ONLY a valid JSON object:
                 console.log("Grok Raw Response:", aiData);
                 const parsedAiData = typeof aiData === 'string' ? JSON.parse(aiData) : aiData;
 
-                // Merge AI Data
-                analysis.scores.ux = parsedAiData.ux_score || 70;
-                const gradeMap = { 'A': 95, 'B': 85, 'C': 75, 'D': 65, 'F': 50 };
-                analysis.scores.ui = gradeMap[parsedAiData.visual_hierarchy_grade?.[0]?.toUpperCase()] || 70;
-                analysis.scores.accessibility = parsedAiData.accessibility_score || 70;
+                // Merge 100% AI-Driven Data
+                analysis.scores.ux = parsedAiData.ux_score || 0;
+                analysis.scores.ui = parsedAiData.ui_score || 0;
+                analysis.scores.accessibility = parsedAiData.accessibility_score || 0;
+
+                analysis.good = parsedAiData.good_points || [];
+                analysis.bad = parsedAiData.bad_points || [];
+                analysis.flowAnalysis = parsedAiData.conversion_optimization || "Analysis complete.";
+                analysis.improvements = [`**Visual Hierarchy Grade**: ${parsedAiData.visual_hierarchy_grade || 'N/A'}`];
 
                 analysis.lawsObservation = [];
 
                 if (parsedAiData.critical_issues) {
                     parsedAiData.critical_issues.forEach(issue => {
-                        const formattedIssue = `**${issue.element}**: ${issue.issue} (${issue.severity.toUpperCase()}) - Fix: ${issue.fix}`;
-                        if (issue.severity.toLowerCase().includes('critical') || issue.severity.toLowerCase().includes('warning')) {
-                            analysis.bad.push(formattedIssue);
-                        } else {
-                            analysis.improvements.push(formattedIssue);
-                        }
-
                         analysis.actionItems.push({
                             element: issue.element,
                             issue: issue.issue,
@@ -249,7 +233,7 @@ Return ONLY a valid JSON object:
                 }
 
                 analysis.debugError = `Visual/AI Error (Grok): ${visualError.message}`;
-                analysis.bad.push(`**Visual Analysis Failed (Grok)**: ${errorMessage}. Falling back to Code Analysis.`);
+                analysis.bad.push(`**Visual Analysis Failed (Grok)**: ${errorMessage}.`);
 
                 if (troubleshooting) {
                     analysis.bad.push(`**Troubleshooting**: ${troubleshooting}`);

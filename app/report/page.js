@@ -8,11 +8,13 @@ import { Card } from '@/components/Card';
 import { Button } from '@/components/Button';
 import Link from 'next/link';
 
+
 export default function ReportPage() {
     return (
         <Suspense fallback={
             <div style={{ textAlign: 'center', marginTop: '10vh' }}>
-                <h2 className="animate-pulse" style={{ fontSize: '2rem' }}>Loading...</h2>
+                <div className="animate-pulse" style={{ fontSize: '3rem' }}>✨</div>
+                <h2 className="animate-pulse" style={{ fontSize: '1.5rem', marginTop: '1rem' }}>Generating Intelligence...</h2>
             </div>
         }>
             <ReportContent />
@@ -37,190 +39,251 @@ function ReportContent() {
 
     if (loading) {
         return (
-            <div style={{ textAlign: 'center', marginTop: '10vh' }}>
-                <h2 className="animate-pulse" style={{ fontSize: '2rem' }}>Analyzing {url}...</h2>
-                <p style={{ color: 'hsl(var(--muted-foreground))' }}>Generating UI/UX insights</p>
+            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', minHeight: '60vh' }}>
+                <div style={{ position: 'relative', width: '100px', height: '100px' }}>
+                    <div className="animate-spin" style={{
+                        position: 'absolute',
+                        width: '100%',
+                        height: '100%',
+                        border: '4px solid hsl(var(--primary) / 0.1)',
+                        borderTop: '4px solid hsl(var(--primary))',
+                        borderRadius: '50%'
+                    }}></div>
+                    <div style={{
+                        position: 'absolute',
+                        top: '50%',
+                        left: '50%',
+                        transform: 'translate(-50%, -50%)',
+                        fontSize: '2rem'
+                    }}>🧠</div>
+                </div>
+                <h2 style={{ marginTop: '2rem', fontSize: '1.5rem', color: 'white' }}>Analyzing {new URL(url).hostname}</h2>
+                <p style={{ color: 'hsl(var(--muted-foreground))', marginTop: '0.5rem' }}>Our AI models are auditing your user experience...</p>
             </div>
         );
     }
 
-    if (!data) return <div>Error loading report.</div>;
+    if (!data) return <div style={{ textAlign: 'center', padding: '4rem' }}>Error loading report. Please try again.</div>;
 
     return (
-        <div className="container" style={{ display: 'flex', flexDirection: 'column', gap: '2rem', padding: '2rem 1rem' }}>
-            <div style={{
-                display: 'flex',
-                justifyContent: 'space-between',
-                alignItems: 'center',
-                flexWrap: 'wrap',
-                gap: '1rem'
-            }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '3rem', padding: '2rem 0' }}>
+            {/* Header Area */}
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', flexWrap: 'wrap', gap: '1.5rem' }}>
                 <div>
-                    <h1 style={{ fontSize: '1.75rem', lineHeight: '1.2' }}>Analysis Report</h1>
-                    <p style={{
-                        color: 'hsl(var(--muted-foreground))',
-                        wordBreak: 'break-all',
-                        overflowWrap: 'break-word',
-                        fontSize: '0.85rem',
-                        maxWidth: '100%'
-                    }}>Source: {data.url}</p>
+                    <span style={{
+                        textTransform: 'uppercase',
+                        letterSpacing: '0.2em',
+                        fontSize: '0.75rem',
+                        color: 'hsl(var(--primary))',
+                        fontWeight: 'bold'
+                    }}>Audit Result</span>
+                    <h1 style={{ fontSize: '2.5rem', marginTop: '0.5rem' }}>Senior UX Audit</h1>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginTop: '0.5rem', color: 'hsl(var(--muted-foreground))' }}>
+                        <span style={{ fontSize: '1rem' }}>🌐</span>
+                        <span style={{ fontSize: '0.9rem' }}>{data.url}</span>
+                    </div>
                 </div>
-                <div className="w-full-mobile w-auto-md">
-                    <Link href="/analyze">
-                        <Button variant="secondary" style={{ width: '100%' }}>New Analysis</Button>
-                    </Link>
-                </div>
+                <Link href="/analyze">
+                    <Button variant="secondary" style={{ borderRadius: '100px', padding: '0.75rem 1.5rem' }}>
+                        <span>←</span> Analyze Another Site
+                    </Button>
+                </Link>
             </div>
 
-            {/* Scores */}
-            <div className="grid-stack grid-3" style={{ gap: '1rem' }}>
-                <ScoreCard label="UX Score" score={data.scores.ux} />
-                <ScoreCard label="UI Score" score={data.scores.ui} />
+            {/* Score Grid */}
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1.5rem' }}>
+                <ScoreCard label="User Experience" score={data.scores.ux} />
+                <ScoreCard label="Visual Design" score={data.scores.ui} />
                 <ScoreCard label="Accessibility" score={data.scores.accessibility} />
+                <ScoreCard label="Hierarchy Grade" value={data.improvements[0]?.split(': ')[1] || 'N/A'} isText />
             </div>
 
-            {/* Actionable Improvements Section */}
-            {data.actionItems && data.actionItems.length > 0 && (
-                <Card style={{ background: 'linear-gradient(135deg, hsl(var(--primary) / 0.1), transparent)', border: '1px solid hsl(var(--primary) / 0.2)' }}>
-                    <h2 style={{ fontSize: '1.5rem', marginBottom: '1.5rem', display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-                        <span style={{ fontSize: '2rem' }}>🎯</span> Actionable Improvements
-                    </h2>
+            {/* Main Content Grid */}
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '2rem' }}>
+
+                {/* 100% AI Good/Bad Sections */}
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '2rem' }}>
+                    <SectionBox title="What's Working Well" color="#4ade80" icon="✅">
+                        <ul style={{ listStyle: 'none', padding: 0, margin: 0, display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                            {data.good.map((item, i) => (
+                                <li key={i} style={{ display: 'flex', gap: '0.75rem', fontSize: '1rem' }}>
+                                    <span style={{ color: '#4ade80', flexShrink: 0 }}>✦</span>
+                                    <span>{item}</span>
+                                </li>
+                            ))}
+                        </ul>
+                    </SectionBox>
+
+                    <SectionBox title="Critical Friction Points" color="#f87171" icon="🚨">
+                        <ul style={{ listStyle: 'none', padding: 0, margin: 0, display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                            {data.bad.map((item, i) => (
+                                <li key={i} style={{ display: 'flex', gap: '0.75rem', fontSize: '1rem' }}>
+                                    <span style={{ color: '#f87171', flexShrink: 0 }}>⚠</span>
+                                    <span>{item}</span>
+                                </li>
+                            ))}
+                        </ul>
+                    </SectionBox>
+                </div>
+
+                {/* Conversion Strategy */}
+                <Card style={{
+                    border: '1px solid hsl(var(--primary) / 0.2)',
+                    background: 'linear-gradient(135deg, hsl(var(--primary) / 0.1), transparent)'
+                }}>
+                    <h3 style={{ fontSize: '1.5rem', marginBottom: '1rem', display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                        <span>🚀</span> Conversion Optimization Strategy
+                    </h3>
+                    <p style={{ fontSize: '1.1rem', color: 'white', lineHeight: '1.7' }}>
+                        {data.flowAnalysis}
+                    </p>
+                </Card>
+
+                {/* Detailed Action Items */}
+                <div>
+                    <h3 style={{ fontSize: '1.75rem', marginBottom: '1.5rem' }}>Professional Recommendations</h3>
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
                         {data.actionItems.map((item, i) => (
-                            <div key={i} style={{
-                                padding: '1.5rem',
-                                background: 'hsl(var(--card))',
-                                borderRadius: 'calc(var(--radius) / 2)',
-                                borderLeft: `4px solid ${item.severity.toLowerCase().includes('critical') ? '#f87171' : item.severity.toLowerCase().includes('warning') ? '#facc15' : '#60a5fa'}`,
-                                boxShadow: '0 4px 12px rgba(0,0,0,0.1)'
-                            }}>
-                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'start', marginBottom: '0.75rem' }}>
-                                    <div>
-                                        <h4 style={{ fontWeight: 'bold', fontSize: '1.1rem', marginBottom: '0.25rem' }}>{item.element}</h4>
-                                        <p style={{ fontSize: '0.9rem', color: 'hsl(var(--muted-foreground))' }}>{item.issue}</p>
-                                    </div>
-                                    <span style={{
-                                        fontSize: '0.75rem',
-                                        fontWeight: 'bold',
-                                        padding: '0.25rem 0.5rem',
-                                        borderRadius: '4px',
-                                        background: 'rgba(255,255,255,0.05)',
-                                        textTransform: 'uppercase'
-                                    }}>{item.severity}</span>
-                                </div>
-                                <div style={{
-                                    marginTop: '1rem',
-                                    padding: '1rem',
-                                    background: 'rgba(74, 222, 128, 0.05)',
-                                    borderRadius: '4px',
-                                    border: '1px dashed rgba(74, 222, 128, 0.2)'
-                                }}>
-                                    <h5 style={{ fontSize: '0.85rem', fontWeight: 'bold', color: '#4ade80', marginBottom: '0.5rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                                        <span>🛠️</span> HOW TO FIX:
-                                    </h5>
-                                    <p style={{ fontSize: '0.95rem', lineHeight: '1.5' }}>{item.fix}</p>
-                                </div>
-                            </div>
+                            <DetailCard key={i} item={item} />
                         ))}
                     </div>
-                </Card>
-            )}
+                </div>
 
-            {/* Detailed Analysis */}
-            <div className="grid-stack grid-2" style={{ gap: '2rem' }}>
-                <Card>
-                    <h3 style={{ color: '#4ade80', fontSize: '1.25rem', marginBottom: '1rem' }}>What's Good</h3>
-                    <ul style={{ paddingLeft: '1.5rem', color: 'hsl(var(--muted-foreground))' }}>
-                        {data.good.map((item, i) => <li key={i} style={{ marginBottom: '0.5rem' }}>{item}</li>)}
-                    </ul>
-                </Card>
-
-                <Card>
-                    <h3 style={{ color: '#f87171', fontSize: '1.25rem', marginBottom: '1rem' }}>Bad Points</h3>
-                    <ul style={{ paddingLeft: '1.5rem', color: 'hsl(var(--muted-foreground))' }}>
-                        {data.bad.map((item, i) => <li key={i} style={{ marginBottom: '0.5rem' }}>{item}</li>)}
-                    </ul>
-                </Card>
-
-                <Card style={{ gridColumn: '1 / -1' }}>
-                    <h3 style={{ color: '#60a5fa', fontSize: '1.25rem', marginBottom: '1rem' }}>Improvements & Flow</h3>
-                    <p style={{ marginBottom: '1rem', color: 'hsl(var(--muted-foreground))' }}>{data.flowAnalysis}</p>
-                    <h4 style={{ fontWeight: 'bold', marginBottom: '0.5rem' }}>Recommendations:</h4>
-                    <ul style={{ paddingLeft: '1.5rem', color: 'hsl(var(--muted-foreground))' }}>
-                        {data.improvements.map((item, i) => <li key={i} style={{ marginBottom: '0.5rem' }}>{item}</li>)}
-                    </ul>
-                </Card>
-
-                {/* Laws of UX Analysis */}
-                {data.lawsObservation && (
-                    <Card style={{ gridColumn: '1 / -1' }}>
-                        <h3 style={{ color: '#c084fc', fontSize: '1.25rem', marginBottom: '1rem' }}>UX Laws Analysis</h3>
-                        <div className="grid-stack grid-3" style={{ gap: '1.5rem' }}>
-                            {data.lawsObservation.map((item, i) => (
-                                <div key={i} style={{ padding: '1.5rem', background: 'rgba(255,255,255,0.03)', borderRadius: '0.5rem', border: '1px solid rgba(255,255,255,0.05)' }}>
-                                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.75rem', flexWrap: 'wrap', gap: '0.5rem' }}>
-                                        <h4 style={{ fontWeight: 'bold', fontSize: '1.1rem' }}>{item.law.name}</h4>
-                                        <Badge status={item.status} />
-                                    </div>
-                                    <p style={{ fontSize: '0.9rem', marginBottom: '0.75rem', color: 'hsl(var(--muted-foreground))', lineHeight: '1.5' }}>
-                                        {item.observation}
-                                    </p>
-                                    <p style={{ fontSize: '0.85rem', color: 'hsl(var(--primary))', fontStyle: 'italic', opacity: 0.8 }}>
-                                        "{item.law.summary}"
-                                    </p>
-                                </div>
+                {/* UX Laws Breakdown */}
+                {data.lawsObservation && data.lawsObservation.length > 0 && (
+                    <div style={{ marginTop: '2rem' }}>
+                        <h3 style={{ fontSize: '1.75rem', marginBottom: '1.5rem' }}>Laws of UX Audit</h3>
+                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: '1.5rem' }}>
+                            {data.lawsObservation.map((obs, i) => (
+                                <LawCard key={i} obs={obs} />
                             ))}
                         </div>
-                    </Card>
+                    </div>
                 )}
             </div>
         </div>
     );
 }
 
-function Badge({ status }) {
-    let color = '#94a3b8'; // gray
-    let bg = 'rgba(148, 163, 184, 0.1)';
-
-    if (status === 'passed') {
-        color = '#4ade80'; // green
-        bg = 'rgba(74, 222, 128, 0.1)';
-    } else if (status === 'violated') {
-        color = '#f87171'; // red
-        bg = 'rgba(248, 113, 113, 0.1)';
-    } else if (status === 'suggestion') {
-        color = '#60a5fa'; // blue
-        bg = 'rgba(96, 165, 250, 0.1)';
-    }
-
+function SectionBox({ title, children, color, icon }) {
     return (
-        <span style={{
-            display: 'inline-block',
-            padding: '0.25rem 0.5rem',
-            borderRadius: '999px',
-            fontSize: '0.75rem',
-            fontWeight: 'bold',
-            color: color,
-            backgroundColor: bg,
-            textTransform: 'uppercase'
-        }}>
-            {status}
-        </span>
+        <Card style={{ borderTop: `4px solid ${color}` }}>
+            <h3 style={{ color: color, fontSize: '1.25rem', marginBottom: '1.5rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                <span>{icon}</span> {title}
+            </h3>
+            {children}
+        </Card>
     );
 }
 
-function ScoreCard({ label, score }) {
-    let color = 'hsl(var(--primary))';
-    if (score < 50) color = '#f87171';
-    else if (score < 80) color = '#facc15';
-    else color = '#4ade80';
+function DetailCard({ item }) {
+    const isCritical = item.severity.toLowerCase().includes('critical');
+    const isWarning = item.severity.toLowerCase().includes('warning');
+    const color = isCritical ? '#f87171' : isWarning ? '#fbbf24' : '#60a5fa';
 
     return (
-        <Card style={{ textAlign: 'center' }}>
-            <div style={{ fontSize: '3rem', fontWeight: 'bold', color: color }}>
-                {score}
+        <div style={{
+            padding: '2rem',
+            borderRadius: 'var(--radius)',
+            background: 'rgba(255,255,255,0.02)',
+            border: '1px solid rgba(255,255,255,0.05)',
+            display: 'flex',
+            flexDirection: 'column',
+            gap: '1.5rem'
+        }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '1rem' }}>
+                <div style={{ flex: 1 }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '0.5rem' }}>
+                        <span style={{
+                            fontSize: '0.7rem',
+                            fontWeight: 'bold',
+                            textTransform: 'uppercase',
+                            padding: '0.2rem 0.5rem',
+                            borderRadius: '4px',
+                            background: `${color}20`,
+                            color: color,
+                            border: `1px solid ${color}40`
+                        }}>{item.severity}</span>
+                        <h4 style={{ fontSize: '1.25rem' }}>{item.element}</h4>
+                    </div>
+                    <p style={{ fontSize: '1rem', color: 'hsl(var(--muted-foreground))' }}>{item.issue}</p>
+                </div>
             </div>
-            <div style={{ color: 'hsl(var(--muted-foreground))', marginTop: '0.5rem' }}>{label}</div>
+
+            <div style={{
+                padding: '1.25rem',
+                background: 'rgba(74, 222, 128, 0.03)',
+                borderRadius: '8px',
+                borderLeft: '4px solid #4ade80'
+            }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.5rem', color: '#4ade80', fontWeight: 'bold', fontSize: '0.9rem' }}>
+                    <span>🛠</span> RECOMMENDED FIX
+                </div>
+                <p style={{ color: 'white', lineHeight: '1.6' }}>{item.fix}</p>
+            </div>
+        </div>
+    );
+}
+
+function LawCard({ obs }) {
+    const isViolated = obs.status === 'violated';
+    const color = isViolated ? '#f87171' : '#60a5fa';
+
+    return (
+        <Card style={{ position: 'relative', overflow: 'hidden' }}>
+            <div style={{
+                position: 'absolute',
+                top: 0,
+                right: 0,
+                padding: '0.5rem 1rem',
+                fontSize: '0.65rem',
+                fontWeight: 'bold',
+                background: isViolated ? '#f8717120' : '#60a5fa20',
+                color: color,
+                textTransform: 'uppercase',
+                borderBottomLeftRadius: '12px'
+            }}>{obs.status}</div>
+
+            <h4 style={{ fontSize: '1.1rem', marginBottom: '0.75rem' }}>{obs.law.name}</h4>
+            <p style={{ fontSize: '0.9rem', marginBottom: '1rem' }}>{obs.observation}</p>
+            <div style={{
+                fontSize: '0.8rem',
+                color: 'hsl(var(--primary))',
+                fontStyle: 'italic',
+                paddingTop: '1rem',
+                borderTop: '1px solid rgba(255,255,255,0.05)'
+            }}>
+                "{obs.law.summary}"
+            </div>
+        </Card>
+    );
+}
+
+function ScoreCard({ label, score, value, isText }) {
+    let color = 'white';
+    if (!isText) {
+        if (score < 50) color = '#f87171';
+        else if (score < 80) color = '#fbbf24';
+        else color = '#4ade80';
+    }
+
+    return (
+        <Card style={{ textAlign: 'center', display: 'flex', flexDirection: 'column', justifyContent: 'center', padding: '2rem' }}>
+            <div style={{
+                fontSize: isText ? '2.5rem' : '3.5rem',
+                fontWeight: '900',
+                color: isText ? 'hsl(var(--primary))' : color,
+                lineHeight: 1
+            }}>
+                {isText ? value : score}
+            </div>
+            <div style={{
+                marginTop: '0.75rem',
+                fontSize: '0.8rem',
+                textTransform: 'uppercase',
+                letterSpacing: '0.1em',
+                color: 'hsl(var(--muted-foreground))'
+            }}>{label}</div>
         </Card>
     );
 }
