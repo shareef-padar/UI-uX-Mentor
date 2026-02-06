@@ -176,30 +176,6 @@ function ReportContent() {
                         </div>
                     </div>
                 )}
-
-                {/* DEBUG SECTION */}
-                <div style={{ marginTop: '4rem', opacity: 0.5 }}>
-                    <h4 style={{ fontSize: '0.8rem', color: 'hsl(var(--primary))', marginBottom: '1rem', textTransform: 'uppercase' }}>🔧 Debug Intelligence State</h4>
-                    <pre style={{
-                        background: 'rgba(0,0,0,0.5)',
-                        padding: '1.5rem',
-                        borderRadius: '12px',
-                        fontSize: '0.75rem',
-                        overflow: 'auto',
-                        border: '1px solid rgba(255,255,255,0.05)',
-                        color: '#4ade80'
-                    }}>
-                        {JSON.stringify({
-                            status: data.status || 'UNDEFINED',
-                            aiEnabled: data.aiEnabled,
-                            scores: data.scores,
-                            goodCount: data.good?.length,
-                            badCount: data.bad?.length,
-                            actionItemsCount: data.actionItems?.length,
-                            debugError: data.debugError
-                        }, null, 2)}
-                    </pre>
-                </div>
             </div>
         </div>
     );
