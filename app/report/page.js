@@ -83,20 +83,6 @@ function ReportContent() {
                             <span style={{ fontSize: '1rem' }}>🌐</span>
                             <span style={{ fontSize: '0.9rem' }}>{data.url}</span>
                         </div>
-                        {data.status && (
-                            <span style={{
-                                fontSize: '0.65rem',
-                                background: data.status.includes('Error') || data.status.includes('Failed') ? 'rgba(248, 113, 113, 0.1)' : 'rgba(255, 255, 255, 0.05)',
-                                color: data.status.includes('Error') || data.status.includes('Failed') ? '#f87171' : 'hsl(var(--muted-foreground))',
-                                padding: '0.2rem 0.6rem',
-                                borderRadius: '100px',
-                                border: '1px solid rgba(255,255,255,0.05)',
-                                textTransform: 'uppercase',
-                                letterSpacing: '0.05em'
-                            }}>
-                                Status: {data.status}
-                            </span>
-                        )}
                     </div>
                 </div>
                 <Link href="/analyze">

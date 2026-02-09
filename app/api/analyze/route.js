@@ -50,7 +50,6 @@ async function getBrowser() {
     const isProduction = process.env.NODE_ENV === 'production';
 
     if (isProduction) {
-        console.log("Launching Puppeteer Core for Vercel...");
         try {
             return await puppeteerCore.launch({
                 args: [...chromium.args, '--hide-scrollbars', '--disable-web-security'],
@@ -63,7 +62,6 @@ async function getBrowser() {
             throw new Error(`Vercel Browser Launch Failed: ${error.message}`);
         }
     } else {
-        console.log("Launching Local Puppeteer...");
         try {
             const puppeteer = await import('puppeteer');
             return await puppeteer.default.launch({
@@ -71,7 +69,6 @@ async function getBrowser() {
                 args: ['--no-sandbox', '--disable-setuid-sandbox']
             });
         } catch (e) {
-            console.log("Local puppeteer not found, trying core with default paths...", e);
             return await puppeteerCore.launch({
                 channel: 'chrome',
                 headless: "new"
@@ -137,8 +134,6 @@ export async function POST(request) {
             return NextResponse.json({ error: 'URL is required' }, { status: 400 });
         }
 
-        console.log(`Analyzing URL: ${url}`);
-
         // 1. Fetch HTML (Code Analysis)
         let html = '';
         try {
@@ -179,15 +174,11 @@ export async function POST(request) {
 
         // 3. Visual Analysis (Screenshot + AI)
         try {
-            analysis.status = "Launching Browser";
             browser = await getBrowser();
-            analysis.status = "Browser Launched";
             const page = await browser.newPage();
             await page.setViewport({ width: 1280, height: 800 });
 
-            analysis.status = "Navigating to Site";
             await page.goto(url, { waitUntil: 'networkidle2', timeout: 30000 });
-            analysis.status = "Capturing Visual State";
 
             const screenshotBuffer = await page.screenshot({
                 encoding: 'base64',
@@ -201,7 +192,6 @@ export async function POST(request) {
             // Attempt Grok first
             if (XAI_KEY && XAI_KEY !== 'your_xai_api_key_here') {
                 try {
-                    analysis.status = "Auditing (Grok)...";
                     aiDataText = await runGrokAnalysis(screenshotBuffer);
                     usedModel = "Grok-2";
                 } catch (grokError) {
@@ -212,7 +202,6 @@ export async function POST(request) {
             // Fallback to Gemini if Grok skipped or failed
             if (!aiDataText && GEN_AI_KEY) {
                 try {
-                    analysis.status = "Auditing (Gemini)...";
                     aiDataText = await runGeminiAnalysis(screenshotBuffer);
                     usedModel = "Gemini Pro";
                 } catch (geminiError) {
@@ -222,7 +211,6 @@ export async function POST(request) {
             }
 
             if (aiDataText) {
-                analysis.status = `Finalizing (${usedModel})`;
                 const parsedAiData = typeof aiDataText === 'string' ? JSON.parse(aiDataText) : aiDataText;
 
                 // Merge Data
@@ -254,27 +242,36 @@ export async function POST(request) {
                     });
                 }
                 analysis.aiEnabled = true;
-                analysis.status = `Audit Complete via ${usedModel}`;
             } else {
-                analysis.status = "Audit Failed (No AI keys or errors)";
                 analysis.bad.push("Could not reach any AI models for visual analysis. Please check your API keys.");
             }
 
         } catch (fatalError) {
-            console.error("Fatal Analysis Error:", fatalError);
-            analysis.status = `Fatal Error: ${fatalError.message}`;
-            analysis.debugError = fatalError.message;
+            console.error("Visual Analysis Error:", fatalError);
+            analysis.bad.push(`Visual analysis failed: ${fatalError.message}`);
         }
 
-        console.log("FINAL ANALYSIS RESPONSE:", JSON.stringify(analysis, null, 2));
-        return NextResponse.json(analysis);
+        // Create clean response object for production
+        const finalResponse = {
+            url: analysis.url,
+            title: analysis.title,
+            scores: analysis.scores,
+            good: analysis.good,
+            bad: analysis.bad,
+            improvements: analysis.improvements,
+            actionItems: analysis.actionItems,
+            lawsObservation: analysis.lawsObservation,
+            flowAnalysis: analysis.flowAnalysis,
+            aiEnabled: analysis.aiEnabled
+        };
+
+        return NextResponse.json(finalResponse);
 
     } catch (error) {
-        console.error("Critical Analysis Error:", error);
+        console.error("Critical System Error:", error);
         return NextResponse.json({
             error: 'System Error',
-            details: error.message,
-            status: "Fatal Error"
+            details: error.message
         }, { status: 500 });
     } finally {
         if (browser) await browser.close();
