@@ -175,7 +175,7 @@ function ReportContent() {
                             ))}
                         </div>
                     </div>
-
+                )}
 {/* DEBUG SECTION */}
                 <div style={{ marginTop: '4rem', opacity: 0.5 }}>
                     <h4 style={{ fontSize: '0.8rem', color: 'hsl(var(--primary))', marginBottom: '1rem', textTransform: 'uppercase' }}>
@@ -193,7 +193,7 @@ function ReportContent() {
 </pre>
     </div>
 
-                )}
+                
             </div>
         </div>
     );
